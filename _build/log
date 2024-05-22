@@ -1,0 +1,6 @@
+# dune init proj Int128_verification
+# OCAMLPARAM: unset
+# Shared cache: disabled
+# Shared cache location: /Users/brianshu/.cache/dune/db
+# Workspace root: /Users/brianshu/workspace/Int128_verification
+# Auto-detected concurrency: 8
