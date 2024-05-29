@@ -1,22 +1,75 @@
 module Int128
 
+    use list.List
+    use list.Mem
+    use list.Length
     use int.Int
-    use array.Array
-    
+    use ref.Ref
+
     type int128 = (int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int)
                    
-    let constant min_int128 : int = -0x8000_0000_0000_0000_0000_0000_0000_0000
-    let constant max_int128 : int = 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffff
+    (* useful constants *)
+    let zero128: int128 = (
+        0,  0,  0,  0,  0,  0,  0,  0,
+        0,  0,  0,  0,  0,  0,  0,  0
+    )
 
-  let int128_to_list (i: int128) : (array int) =
-  
-    let arr : array int = Array.make 16 0 in
-    match i with
-    | (i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15, i16) ->    
-    arr[ 0]<-i1; arr[ 1]<-i2; arr[ 2]<-i3; arr[ 3]<-i4; arr[ 4]<-i5; arr[ 5]<-i6;
-    arr[ 6]<-i7; arr[ 7]<-i8; arr[ 8]<-i9; arr[ 9]<-i10; arr[10]<-i11; arr[11]<-i12;  
-    arr[12]<-i13; arr[13]<-i14; arr[14]<-i15; arr[15]<-i16;
+    let one128: int128 = (
+        0,  0,  0,  0,  0,  0,  0,  0,
+        0,  0,  0,  0,  0,  0,  0,  1
+    )
+
+    let maxint128: int128 = (
+        255, 255, 255, 255, 255, 255, 255, 255,
+        255, 255, 255, 255, 255, 255, 255, 255
+    )
+
+    let int128_to_list (i: int128) : (list int) =
+        match i with
+        | (i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15, i16) ->    
+          Cons i1 (Cons i2 (Cons i3 (Cons i4 (Cons i5 (Cons i6 (Cons i7 (Cons i8 (Cons i9 (Cons i10 (Cons i11 (Cons i12 (Cons i13 (Cons i14 (Cons i15 (Cons i16 Nil))))))))))))))) 
+        end
+
+    predicate check_bytes (lst: list int) = 
+    forall byte. mem byte lst -> byte > 0 /\ byte < 255
     
-    return arr
+    let int128_from_list (lst : list int) 
+    requires {check_bytes lst}
+    =
+    match lst with
+    | Cons i1 (Cons i2 (Cons i3 (Cons i4 (Cons i5 (Cons i6 (Cons i7 (Cons i8 (Cons i9 (Cons i10 (Cons i11 (Cons i12 (Cons i13 (Cons i14 (Cons i15 (Cons i16 Nil))))))))))))))) ->
+        (i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15, i16)
     end
+    
+    let to_string128 (i: int128) : string = 
+        match i with
+        | (i1, i2, i3, i4, i5, i6, i7, i8,
+           i9, i10, i11, i12, i13, i14, i15, i16) -> "maxint128"
+        | maxint128 -> "maxint128"
+        | _ -> "large int"
+        end
 end
+
+module Compute
+    use int.Int
+    use int.ComputerDivision
+    use list.List
+    use list.Length
+    
+
+    let rec extend (a : list int) (b : list int) : (list int, list int) 
+    =
+    if length a = length b then (a,b)
+    else if length a > length b then extend a (Cons 0 b)
+    else extend (Cons 0 a) b
+
+    let rec add (a : list int) (b : list int) : (int, list int)
+    =
+        match (a, b) with
+        | (Nil, Nil) -> (0, Nil)
+        | (Cons a_digit a_rest, Cons b_digit b_rest) -> 
+        let (rest_carry, rest_sum) = add a_rest b_rest in
+        let digit_sum = a_digit + b_digit + rest_carry in
+        ( div(digit_sum 256), Cons (mod digit_sum 256) rest_sum)
+        | _ -> ()
+        end 

@@ -3,9 +3,11 @@
 "https://www.why3.org/why3session.dtd">
 <why3session shape_version="6">
 <prover id="0" name="Alt-Ergo" version="2.5.3" timelimit="5" steplimit="0" memlimit="1000"/>
-<file format="whyml">
+<file format="whyml" proved="true">
 <path name=".."/><path name="int128.mlw"/>
 <theory name="Int128">
+ <goal name="int128_from_list&#39;vc" expl="VC for int128_from_list">
+ </goal>
  <goal name="int128_to_list&#39;vc" expl="VC for int128_to_list">
  <proof prover="0" obsolete="true"><result status="valid" time="0.020080" steps="1"/></proof>
  </goal>

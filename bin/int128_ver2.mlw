@@ -1,0 +1,129 @@
+module Int128
+
+    use int.Int
+    use list.List
+    use list.Mem
+    use string.String
+
+    type int128 = { 
+        i1: int; i2: int; i3: int; i4: int;
+        i5: int; i6: int; i7: int; i8: int;
+        i9: int; i10: int; i11: int; i12: int;
+        i13: int; i14: int; i15: int; i16: int 
+    }
+
+    (* useful constants *)
+    let zero128: int128 = { 
+        i1 = 0; i2 = 0; i3 = 0; i4 = 0;
+        i5 = 0; i6 = 0; i7 = 0; i8 = 0;
+        i9 = 0; i10 = 0; i11 = 0; i12 = 0;
+        i13 = 0; i14 = 0; i15 = 0; i16 = 0 
+    }
+
+    let one128: int128 = { 
+        i1 = 0; i2 = 0; i3 = 0; i4 = 0;
+        i5 = 0; i6 = 0; i7 = 0; i8 = 0;
+        i9 = 0; i10 = 0; i11 = 0; i12 = 0;
+        i13 = 0; i14 = 0; i15 = 0; i16 = 1 
+    }
+
+    let maxint128: int128 = { 
+        i1 = 255; i2 = 255; i3 = 255; i4 = 255;
+        i5 = 255; i6 = 255; i7 = 255; i8 = 255;
+        i9 = 255; i10 = 255; i11 = 255; i12 = 255;
+        i13 = 255; i14 = 255; i15 = 255; i16 = 255 
+    }
+
+    (* these two functions are intended for internal use only *)
+    let int128_to_list (i: int128) : (list int) =
+        match i with
+        | {i1 = i1; i2 = i2; i3 = i3; i4 = i4; i5 = i5; i6 = i6; i7 = i7; i8 = i8; i9 = i9; i10 = i10; i11 = i11; i12 = i12; i13 = i13; i14 = i14; i15 = i15; i16 = i16}-> 
+        Cons i1 (Cons i2 (Cons i3 (Cons i4 (Cons i5 (Cons i6 (Cons i7 (Cons i8 (Cons i9 (Cons i10 (Cons i11 (Cons i12 (Cons i13 (Cons i14 (Cons i15 (Cons i16 Nil)))))))))))))))
+        end
+
+    predicate check_bytes (lst: list int) = 
+    forall byte. mem byte lst -> byte > 0 /\ byte < 255
+    
+    let int128_from_list (lst : list int) : int128
+        requires {check_bytes lst}
+    =
+        match lst with
+        | Cons i1 (Cons i2 (Cons i3 (Cons i4 (Cons i5 (Cons i6 (Cons i7 (Cons i8 (Cons i9 (Cons i10 (Cons i11 (Cons i12 (Cons i13 (Cons i14 (Cons i15 (Cons i16 Nil))))))))))))))) ->
+        {i1 = i1; i2 = i2; i3 = i3; i4 = i4; i5 = i5; i6 = i6; i7 = i7; i8 = i8; i9 = i9; i10 = i10; i11 = i11; i12 = i12; i13 = i13; i14 = i14; i15 = i15; i16 = i16}
+        end
+  
+
+  let to_hex (n: int) : string = 
+    if n = 0 then "0"
+    else if n = 1 then "1"
+    else if n = 2 then "2"
+    else if n = 3 then "3"
+    else if n = 4 then "4"
+    else if n = 5 then "5"
+    else if n = 6 then "6"
+    else if n = 7 then "7"
+    else if n = 8 then "8"
+    else if n = 9 then "9"
+    else if n = 10 then "a"
+    else if n = 11 then "b"
+    else if n = 12 then "c"
+    else if n = 13 then "d"
+    else if n = 14 then "e"
+    else if n = 15 then "f"
+    else "x"
+
+  let to_string128 (i: int128) : string = 
+    match i with
+    | { 0; 0; 0;0; i5 = 0; i6 = 0; i7 = 0; i8 = 0;
+        i9 = 0; i10 = 0; i11 = 0; i12 = 0; i13 = i1; i14 = i2; i15 = i3; i16 = i4 } ->
+      from_int (i1 * 16777216 + i2 * 65536 + i3 * 256 + i4)
+    | { b0 = 255; b1 = 255; b2 = 255; b3 = 255; b4 = 255; b5 = 255; b6 = 255; b7 = 255;
+        b8 = 255; b9 = 255; b10 = 255; b11 = 255; b12 = 255; b13 = 255; b14 = 255; b15 = 255 } ->
+      "maxint128"
+    | _ -> "large int"
+
+  let to_hex128 (i: int128) : string =
+    let rec hex_string (lst: list int) : string =
+      match lst with
+      | Nil -> ""
+      | Cons byte rest -> to_hex (byte / 16) ^ to_hex (byte mod 16) ^ hex_string rest in
+    let rec remove_leading_zeros (lst: list int) : string =
+      match lst with
+      | Nil -> "00"
+      | Cons 0 rest -> remove_leading_zeros rest
+      | _ -> hex_string lst in
+    if i = maxint128 then "max"
+    else remove_leading_zeros (int128_to_list i)
+
+  let from_i128 (i128: int128) : int = 
+    match i128 with
+    | { b0 = 0; b1 = 0; b2 = 0; b3 = 0; b4 = 0; b5 = 0; b6 = 0; b7 = 0;
+        b8 = 0; b9 = 0; b10 = 0; b11 = 0; b12 = i1; b13 = i2; b14 = i3; b15 = i4 } ->
+      i1 * 16777216 + i2 * 65536 + i3 * 256 + i4
+    | _ -> fail "conversion failure"
+
+  let to_i128 (i: int) : int128 =
+    { b0 = 0; b1 = 0; b2 = 0; b3 = 0; b4 = 0; b5 = 0; b6 = 0; b7 = 0;
+      b8 = 0; b9 = 0; b10 = 0; b11 = 0; b12 = i / 16777216 mod 256;
+      b13 = i / 65536 mod 256; b14 = i / 256 mod 256; b15 = i mod 256 }
+
+  let rec add_lists (a: list int) (b: list int) : list int =
+    let rec extend (a: list int) (b: list int) : (list int, list int) =
+      if length a = length b then (a, b)
+      else if length a < length b then extend (Cons 0 a) b
+      else extend a (Cons 0 b) in
+    let rec add (a: list int) (b: list int) : (int, list int) =
+      match (a, b) with
+      | (Nil, Nil) -> (0, Nil)
+      | (Cons a_digit a_rest, Cons b_digit b_rest) ->
+        let (rest_carry, rest_sum) = add a_rest b_rest in
+        let digit_sum = a_digit + b_digit + rest_carry in
+        (digit_sum / 256, Cons (digit_sum mod 256) rest_sum)
+      | _ -> fail "inconsistency in add" in
+    let (ea, eb) = extend a b in
+    match add ea eb with
+    | (0, result) -> result
+    | (carry, result) -> Cons carry result
+
+  let add128 (a: int128) (b: int128) : int128 =
+    int128_from_list (add_lists (int128_to_list a) (int128_to_list b))
