@@ -23,53 +23,149 @@ module Int128
         255, 255, 255, 255, 255, 255, 255, 255,
         255, 255, 255, 255, 255, 255, 255, 255
     )
-
-    let int128_to_list (i: int128) : (list int) =
-        match i with
-        | (i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15, i16) ->    
-          Cons i1 (Cons i2 (Cons i3 (Cons i4 (Cons i5 (Cons i6 (Cons i7 (Cons i8 (Cons i9 (Cons i10 (Cons i11 (Cons i12 (Cons i13 (Cons i14 (Cons i15 (Cons i16 Nil))))))))))))))) 
-        end
-
-    predicate check_bytes (lst: list int) = 
-    forall byte. mem byte lst -> byte > 0 /\ byte < 255
     
-    let int128_from_list (lst : list int) 
-    requires {check_bytes lst}
-    =
+  predicate valid_int (i : int) = 0 <= i <= 255
+
+  predicate valid_list (l: list int) 
+  =
+    match l with
+    | Nil -> true
+    | Cons x xs -> valid_int x /\ valid_list xs
+  end
+  
+  predicate valid_tuple (i: int128) =
+  match i with
+  | (i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15, i16) ->
+      valid_int i1 /\ valid_int i2 /\ valid_int i3 /\ valid_int i4 /\
+      valid_int i5 /\ valid_int i6 /\ valid_int i7 /\ valid_int i8 /\
+      valid_int i9 /\ valid_int i10 /\ valid_int i11 /\ valid_int i12 /\
+      valid_int i13 /\ valid_int i14 /\ valid_int i15 /\ valid_int i16
+  end
+
+  let int128_to_list (i: int128) : (list int)
+    requires {valid_tuple i}
+    ensures {valid_list result}
+  = 
+    match i with
+    | (i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15, i16) ->    
+      Cons i1 (Cons i2 (Cons i3 (Cons i4 (Cons i5 (Cons i6 (Cons i7 (Cons i8 (Cons i9 (Cons i10 (Cons i11 (Cons i12 (Cons i13 (Cons i14 (Cons i15 (Cons i16 Nil)))))))))))))))
+  end
+
+  let int128_from_list (lst : list int) : int128
+    requires {valid_list lst}
+    requires {length lst = 16}
+    ensures {valid_tuple result}
+   =
     match lst with
     | Cons i1 (Cons i2 (Cons i3 (Cons i4 (Cons i5 (Cons i6 (Cons i7 (Cons i8 (Cons i9 (Cons i10 (Cons i11 (Cons i12 (Cons i13 (Cons i14 (Cons i15 (Cons i16 Nil))))))))))))))) ->
-        (i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15, i16)
+      (i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15, i16)
     end
-    
-    let to_string128 (i: int128) : string = 
-        match i with
-        | (i1, i2, i3, i4, i5, i6, i7, i8,
-           i9, i10, i11, i12, i13, i14, i15, i16) -> "maxint128"
-        | maxint128 -> "maxint128"
-        | _ -> "large int"
-        end
 end
 
-module Compute
-    use int.Int
-    use int.ComputerDivision
+module Addition
+    use Int128
+    use mach.int.Int
+    use int.Power
     use list.List
     use list.Length
-    
+    use ref.Ref
 
     let rec extend (a : list int) (b : list int) : (list int, list int) 
+    requires {length a >= 0 /\ length b >= 0}
+    ensures  {match result with (ra, rb) -> length ra = length rb end}
+    variant { if length a > length b then length a - length b else length b - length a }
     =
     if length a = length b then (a,b)
     else if length a > length b then extend a (Cons 0 b)
     else extend (Cons 0 a) b
-
-    let rec add (a : list int) (b : list int) : (int, list int)
+    
+    let rec add (a : list int) (b : list int) : (int, list int) 
+    requires { length a = length b }
+    ensures { let (carry, sum) = result in length sum = length a }
+    variant { length b }
     =
         match (a, b) with
         | (Nil, Nil) -> (0, Nil)
         | (Cons a_digit a_rest, Cons b_digit b_rest) -> 
         let (rest_carry, rest_sum) = add a_rest b_rest in
         let digit_sum = a_digit + b_digit + rest_carry in
-        ( div(digit_sum 256), Cons (mod digit_sum 256) rest_sum)
-        | _ -> ()
-        end 
+        ( digit_sum / 256, Cons (digit_sum % 256) rest_sum)
+        end
+    
+  let rec function list_to_int (l: list int) (byte: int): int
+  variant { length l }
+  =
+  match l with
+  | Nil -> 0
+  | Cons first rest -> first * (power 256 byte) + (list_to_int rest (byte - 1))
+  end
+    
+    
+    
+  let add_lists (a : list int) (b : list int) : (list int)
+
+  =
+    let (ea, eb) = extend a b in
+    match add ea eb with
+    | (carry, res) -> 
+      if carry = 0 then res
+      else Cons carry res
+    end
+end
+
+(*
+module Multiplication
+    use Int128
+    use mach.int.Int
+    use list.ListRich
+    use list.List
+    use list.Length
+    use ref.Ref
+    use Addition
+    let rec mul_digit (a : list int) (b : int): (int, list int) 
+    =
+    match a with
+    | Nil -> (0, Nil)
+    | Cons digit rest -> 
+        let (rest_carry, rest_product) = mul_digit rest b in 
+        let digit_product = digit * b + rest_carry in
+        (digit_product / 256, Cons (digit_product % 256) rest_product)
+    end
+
+    let rec shift (a : list int) (lst : list int) : (list int)
+    = 
+    match lst with
+    | Nil -> a
+    | Cons _ rest -> shift (a ++ Cons 0 Nil) rest
+    end
+
+    
+    let rec remove_zeros (n: int) (lst : list int) : (list int) 
+    =
+    let zero = ref 0 in
+    match (n, lst) with
+    | (zero, _) -> lst
+    | (n, Cons zero rest) -> remove_zeros (n - 1) rest
+    | _ -> Nil
+    end
+
+   let rec mul (a: list int) (b : list int) : (int, list int) 
+    =
+
+    match b with
+    | Nil -> (0, Nil)
+    | Cons digit rest ->
+        let (digit_carry, unshifted_digit_product) = mul_digit a digit in
+        let digit_product = shift unshifted_digit_product rest in
+        let (rest_carry, rest_product) = mul a rest in
+        (digit_carry + rest_carry, add_lists digit_product rest_product) 
+    end
+
+    let multiply (a: int128) (b: int128) : int128
+    = 
+    let zero = ref 0 in
+    match mul (int128_to_list a) (int128_to_list b) with
+    | (zero, result) -> int128_from_list (remove_zeros (length result - 16) result)
+    end
+end
+*)

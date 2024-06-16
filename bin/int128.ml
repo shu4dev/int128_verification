@@ -3,20 +3,18 @@ type int128 = Int128 of (int * int * int * int * int * int * int * int *
                          int * int * int * int * int * int * int * int)
 
 (* useful constants *)
-let zero128 =         Int128 (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-let one128 =          Int128 (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)
+let zero128 =         Int128 (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) 
+let one128 =          Int128 (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1) 
 let maxint128 =       Int128 (255, 255, 255, 255, 255, 255, 255, 255,
-                              255, 255, 255, 255, 255, 255, 255, 255)
+                              255, 255, 255, 255, 255, 255, 255, 255) 
 
 (* these two functions are intended for internal use only *)
 let int128_to_list i = match i with
     | Int128 ( i1,  i2,  i3,  i4,  i5,  i6,  i7,  i8,
                i9, i10, i11, i12, i13, i14, i15, i16) ->
       [i1; i2; i3; i4; i5; i6; i7; i8; i9; i10; i11; i12; i13; i14; i15; i16]
-
 let int128_from_list lst =
-    let rec check_bytes lst = 
-        match lst with
+    let rec check_bytes lst = match lst with
         | [] -> ()
         | first :: rest ->
            if first < 0 || first > 255 then failwith "not a list of bytes"
@@ -55,7 +53,7 @@ let to_string128 i = match i with
                255, 255, 255, 255, 255, 255, 255, 255) -> "maxint128"
      | _ -> "large int"
 
-let to_hex128 i =
+let to_hex128 i = 
      let rec hex_string = function
          | [] -> ""
          | byte :: rest ->
@@ -102,10 +100,18 @@ let add_lists a b =
      | (carry, result) -> carry :: result
 
 (* assert that overflow will fail with "not a list of 16 bytes"
-     (for example, add128 maxint128 maxint128 will overflow)
+   (for example, add128 maxint128 maxint128 will overflow)
    assert that if there is no overflow, the result is a + b *)
 let add128 a b =
      int128_from_list (add_lists (int128_to_list a) (int128_to_list b))
+let add128mod a b =
+     let sum = add_lists (int128_to_list a) (int128_to_list b) in
+     let rec shorten lst = match lst with
+         | [] -> failwith "illegal list length 0"
+         | first :: rest ->
+            if List.length lst > 16 then shorten rest else lst in
+     int128_from_list (shorten sum)
+let inc128 a = add128 a one128
 
 (* simple multiply by adding, slow when b is large
 let m a b =
@@ -167,6 +173,23 @@ let compare128 a b = match (a, b) with
      else if a14 < b14 then -1 else if a14 > b14 then 1
      else if a15 < b15 then -1 else if a15 > b15 then 1
      else assert false   (* we checked at the top for a = b *)
+
+let sub128 a b = (* a - b *)
+     if b = zero128 then a    (* negate doesn't work if b is zero *)
+     else if compare128 a b < 0 then
+           failwith "negative subtraction result not supported"
+     else
+      let list_b = int128_to_list b in
+      let rec negate lst = match lst with  (* pre: lst is not zero *)
+          | [] -> []
+          | [last] -> [256 - last]
+          | first :: rest -> (255 - first) :: negate rest in
+      match add_lists (int128_to_list a) (negate list_b) with
+      | [] -> failwith "illegal subtraction result []"
+      | first :: rest ->
+         (assert (List.length rest = 16);   (* addition must overflow! *)
+          int128_from_list rest)
+let dec128 a = sub128 a one128
 
 let test128 () =
      let n2 = add128 one128 one128 in
