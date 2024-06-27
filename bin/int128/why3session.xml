@@ -4,33 +4,33 @@
 <why3session shape_version="6">
 <prover id="0" name="Alt-Ergo" version="2.5.3" timelimit="5" steplimit="0" memlimit="1000"/>
 <prover id="1" name="Alt-Ergo" version="2.5.3" alternative="counterexamples" timelimit="5" steplimit="0" memlimit="1000"/>
-<file format="whyml">
+<file format="whyml" proved="true">
 <path name=".."/><path name="int128.mlw"/>
-<theory name="Int128" proved="true">
- <goal name="int128_to_list&#39;vc" expl="VC for int128_to_list" proved="true">
+<theory name="Int128">
+ <goal name="int128_to_list&#39;vc" expl="VC for int128_to_list">
  <proof prover="0"><result status="valid" time="0.036610" steps="269"/></proof>
  <proof prover="1" obsolete="true"><result status="timeout" time="5.000000" steps="25"/></proof>
  </goal>
- <goal name="int128_from_list&#39;vc" expl="VC for int128_from_list" proved="true">
+ <goal name="int128_from_list&#39;vc" expl="VC for int128_from_list">
  <proof prover="0"><result status="valid" time="0.409733" steps="8801"/></proof>
  <proof prover="1" obsolete="true"><result status="timeout" time="5.000000" steps="18"/></proof>
  </goal>
 </theory>
 <theory name="Addition">
- <goal name="extend&#39;vc" expl="VC for extend" proved="true">
+ <goal name="extend&#39;vc" expl="VC for extend">
  <proof prover="0"><result status="valid" time="0.020184" steps="102"/></proof>
  <proof prover="1" obsolete="true"><result status="timeout" time="5.000000" steps="21"/></proof>
  </goal>
- <goal name="add&#39;vc" expl="VC for add" proved="true">
+ <goal name="add&#39;vc" expl="VC for add">
  <proof prover="0"><result status="valid" time="0.023244" steps="201"/></proof>
  <proof prover="1" obsolete="true"><result status="timeout" time="5.000000" steps="13"/></proof>
  </goal>
- <goal name="list_to_int&#39;vc" expl="VC for list_to_int" proved="true">
+ <goal name="list_to_int&#39;vc" expl="VC for list_to_int">
  <proof prover="0"><result status="valid" time="0.014228" steps="9"/></proof>
  </goal>
  <goal name="add_lists&#39;vc" expl="VC for add_lists">
- <proof prover="0"><result status="timeout" time="5.000000" steps="26940"/></proof>
- <proof prover="1"><result status="timeout" time="5.000000" steps="11"/></proof>
+ <proof prover="0"><result status="valid" time="0.017909" steps="7"/></proof>
+ <proof prover="1" obsolete="true"><result status="timeout" time="5.000000" steps="7"/></proof>
  </goal>
  <goal name="add128&#39;vc" expl="VC for add128">
  <proof prover="0"><undone/></proof>

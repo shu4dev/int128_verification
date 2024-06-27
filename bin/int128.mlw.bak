@@ -100,17 +100,13 @@ module Addition
   | Cons first rest -> first * (power 256 byte) + (list_to_int rest (byte - 1))
   end
     
-    
-    
   let add_lists (a : list int) (b : list int) : (list int)
 
+  ensures {}
   =
     let (ea, eb) = extend a b in
-    match add ea eb with
-    | (carry, res) -> 
-      if carry = 0 then res
-      else Cons carry res
-    end
+    let (carry, res) = add ea eb in
+    return Cons carry res
 end
 
 (*
